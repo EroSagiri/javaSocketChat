@@ -1,12 +1,9 @@
 package me.sagiri.char.server
 
 import java.io.DataInputStream
-import java.io.DataOutput
 import java.io.DataOutputStream
 import java.net.ServerSocket
 import java.net.Socket
-import java.net.SocketAddress
-import java.util.ArrayList
 import java.util.logging.Logger
 import java.util.regex.Pattern
 
@@ -68,9 +65,11 @@ class Server: Thread {
                             } catch (e : Exception) {
                                 logger.info(e.toString())
                                 user.close()
-                                val userName = user.name
+                                val quitName = user.name
                                 users.remove(user)
-                                sendAll("$userName quit")
+                                users.forEach {
+                                    DataOutputStream(it.socket?.getOutputStream()).writeUTF("$quitName quit")
+                                }
                                 break
                             }
                         }
