@@ -1,12 +1,8 @@
 package me.sagiri.char.client
 
-import com.sun.jndi.toolkit.url.Uri
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.io.EOFException
-import java.net.ConnectException
 import java.net.Socket
-import java.net.URL
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.Exception
@@ -14,26 +10,34 @@ import kotlin.Exception
 class Client : Thread{
     var sockt : Socket = Socket()
     val logger = Logger.getLogger("Client").apply {
-        level = Level.INFO
+        level = Level.OFF
     }
     var dis = DataInputStream(null)
     var dos = DataOutputStream(null)
+    var hostname = ""
+    val port : Int;
     var userName = ""
+    var connectE : ClientConnectEvent? = null;
+    var msgE : ClientMsgEvent? = null;
+
     constructor(hostname : String = "localhost", port : Int = 8888, userName : String = "null") {
-        connect(hostname, port, userName)
+        this.hostname = hostname
+        this.port = port
+        this.userName = userName
     }
 
-    fun connect(hostname : String = "localhost", port : Int = 8888, userName : String = "null") {
+    fun connect() {
         try {
             sockt = Socket(hostname, port)
-            this.userName = userName
+            connectE?.onConnect()
             logger.info("connect ${hostname}:${port}")
             dis = DataInputStream(sockt.getInputStream())
             dos = DataOutputStream(sockt.getOutputStream())
+            start()
 
         } catch (e: java.lang.Exception) {
+            connectE?.onFailed()
             logger.info("connect fail")
-            println("connect failed")
         }
     }
 
@@ -47,13 +51,20 @@ class Client : Thread{
         if(!sockt.isClosed) {
             try {
                 dos.writeUTF(msg)
-                println(msg)
             } catch (e: Exception) {
                 logger.info(e.toString())
             }
         } else {
             logger.info("socket closed")
         }
+    }
+
+    fun setConnectEvent(e : ClientConnectEvent) {
+        this.connectE = e
+    }
+
+    fun  setMsgEvent(e : ClientMsgEvent) {
+        this.msgE = e;
     }
 
     override fun run() {
@@ -67,6 +78,7 @@ class Client : Thread{
                         dos.writeUTF(msg)
                     } catch (e : Exception) {
                         sockt.close()
+                        connectE?.onClose()
                         break
                     }
                 }
@@ -86,10 +98,11 @@ class Client : Thread{
                                 dos.writeUTF(userName)
                             }
                         } else {
-                            println(msg)
+                            msgE?.onMsg(msg)
                         }
                     } catch (e: Exception) {
                         sockt.close()
+                        connectE?.onClose()
                         break
                     }
                 }
