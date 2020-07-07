@@ -1,21 +1,36 @@
 package me.sagiri.char.client
 
 fun main(argv : Array<String>) {
-    var port = 8888
-    if("-port" in argv) {
-        for(i in 0..argv.size-1) {
-            if(argv[i] == "-port") {
-                port = argv[i+1].toInt()
-                break
-            }
+    print("host: ")
+    val host = readLine()
+    print("port: ")
+    val tmp = readLine()
+    val port = if (tmp != null) tmp.toInt() else null
+
+    if (host != null && port != null) {
+        print("name: ")
+        val name = readLine()
+        if (name != null) {
+            val c = Client(host, port, name)
+            c.setConnectEvent(object : ClientConnectEvent {
+                override fun onConnect() {
+                    println("连接成功")
+                }
+
+                override fun onFailed() {
+                    println("连接失败")
+                }
+
+                override fun onClose() {
+
+                }
+            })
+            c.setMsgEvent(object : ClientMsgEvent{
+                override fun onMsg(msg: String) {
+                    println(msg)
+                }
+            })
+            c.connect()
         }
     }
-    val c = Client("localhost", 8888, "sagiri")
-    c.start()
-//    Thread(object : Runnable{
-//        override fun run() {
-//            Thread.sleep(2000)
-//            c.sendMsg("Hi,Sagiri")
-//        }
-//    }).start()
 }
