@@ -1,4 +1,4 @@
-# java编写的网络聊天室
+# kotlin编写的网络聊天室
 ## 运行
 [releases](https://github.com/EromangaMe/javaSocketChar/releases)下载jar文件
 ### 运行服务器端
